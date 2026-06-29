@@ -14,6 +14,7 @@ import {
   canForwardOrAssignRevision,
   canMarkReadyForReview,
 } from "@/lib/rbac";
+import { logAudit } from "@/lib/audit";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -61,6 +62,15 @@ export async function createTicket(formData: FormData) {
     })
     .returning();
 
+  await logAudit({
+    actorId: session.user.id,
+    actorEmail: session.user.email,
+    action: "ticket_created",
+    entityType: "ticket",
+    entityId: ticket.id,
+    metadata: { serviceName: service.name, clientId: parsed.clientId },
+  });
+
   revalidatePath(`/clients/${parsed.clientId}`);
   redirect(`/tickets/${ticket.id}`);
 }
@@ -92,6 +102,14 @@ export async function markReadyForReview(ticketId: string, formData: FormData) {
     .set({ status: "pending_pm_review", updatedAt: new Date() })
     .where(eq(tickets.id, ticketId));
 
+  await logAudit({
+    actorId: session.user.id,
+    actorEmail: session.user.email,
+    action: "ticket_marked_ready",
+    entityType: "ticket",
+    entityId: ticketId,
+  });
+
   revalidatePath(`/tickets/${ticketId}`);
 }
 
@@ -105,6 +123,14 @@ export async function forwardToClient(ticketId: string) {
     .update(tickets)
     .set({ status: "pending_client_approval", updatedAt: new Date() })
     .where(eq(tickets.id, ticketId));
+
+  await logAudit({
+    actorId: session.user.id,
+    actorEmail: session.user.email,
+    action: "ticket_forwarded_to_client",
+    entityType: "ticket",
+    entityId: ticketId,
+  });
 
   revalidatePath(`/tickets/${ticketId}`);
 }
@@ -133,6 +159,15 @@ export async function assignRevision(ticketId: string, formData: FormData) {
     .update(tickets)
     .set({ status: "in_progress", revisionNumber: nextRevision, updatedAt: new Date() })
     .where(eq(tickets.id, ticketId));
+
+  await logAudit({
+    actorId: session.user.id,
+    actorEmail: session.user.email,
+    action: "ticket_revision_assigned",
+    entityType: "ticket",
+    entityId: ticketId,
+    metadata: { revisionNumber: nextRevision },
+  });
 
   revalidatePath(`/tickets/${ticketId}`);
 }
@@ -170,6 +205,12 @@ export async function clientApprove(token: string) {
     .set({ status: "approved", updatedAt: new Date() })
     .where(eq(tickets.id, ticket.id));
 
+  await logAudit({
+    action: "ticket_client_approved",
+    entityType: "ticket",
+    entityId: ticket.id,
+  });
+
   revalidatePath(`/portal/ticket/${token}`);
 }
 
@@ -194,6 +235,12 @@ export async function clientRequestChanges(token: string, formData: FormData) {
     .update(tickets)
     .set({ status: "revision_required", updatedAt: new Date() })
     .where(eq(tickets.id, ticket.id));
+
+  await logAudit({
+    action: "ticket_client_requested_changes",
+    entityType: "ticket",
+    entityId: ticket.id,
+  });
 
   revalidatePath(`/portal/ticket/${token}`);
 }

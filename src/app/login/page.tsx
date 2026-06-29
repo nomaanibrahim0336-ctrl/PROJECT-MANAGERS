@@ -41,6 +41,10 @@ export default async function LoginPage({
             className="field-input mt-1 w-full"
           />
         </div>
+        <label className="flex items-center gap-2 text-sm text-(--color-slate)">
+          <input type="checkbox" name="remember" className="rounded border-(--color-border)" />
+          Remember me for 30 days
+        </label>
         <button type="submit" className="btn-primary w-full">
           Sign in
         </button>

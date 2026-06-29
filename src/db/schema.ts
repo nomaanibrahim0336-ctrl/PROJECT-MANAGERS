@@ -55,6 +55,8 @@ export const deliverableKindEnum = pgEnum("deliverable_kind", [
   "data",
 ]);
 
+export const userStatusEnum = pgEnum("user_status", ["active", "suspended"]);
+
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
@@ -63,8 +65,24 @@ export const users = pgTable("users", {
   role: userRoleEnum("role").notNull().default("team_member"),
   department: departmentEnum("department").notNull().default("general"),
   phone: text("phone"),
+  status: userStatusEnum("status").notNull().default("active"),
+  lastLoginAt: timestamp("last_login_at"),
+  failedLoginAttempts: integer("failed_login_attempts").notNull().default(0),
+  lockedUntil: timestamp("locked_until"),
+  deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const auditLogs = pgTable("audit_logs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  actorId: uuid("actor_id").references(() => users.id),
+  actorEmail: text("actor_email"),
+  action: text("action").notNull(),
+  entityType: text("entity_type").notNull(),
+  entityId: text("entity_id"),
+  metadata: text("metadata"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 export const leads = pgTable("leads", {

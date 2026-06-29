@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { db } from "@/db";
 import { serviceCatalog } from "@/db/schema";
 import { canManageServiceCatalog } from "@/lib/rbac";
+import { logAudit } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -23,10 +24,22 @@ export async function createCustomService(formData: FormData) {
     defaultDepartment: formData.get("defaultDepartment"),
   });
 
-  await db.insert(serviceCatalog).values({
-    name: parsed.name,
-    defaultDepartment: parsed.defaultDepartment,
-    isCustom: true,
+  const [created] = await db
+    .insert(serviceCatalog)
+    .values({
+      name: parsed.name,
+      defaultDepartment: parsed.defaultDepartment,
+      isCustom: true,
+    })
+    .returning();
+
+  await logAudit({
+    actorId: session.user.id,
+    actorEmail: session.user.email,
+    action: "service_catalog_entry_created",
+    entityType: "service_catalog",
+    entityId: created.id,
+    metadata: { name: created.name },
   });
 
   revalidatePath("/admin/services");

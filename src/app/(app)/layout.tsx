@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { auth, signOut } from "@/auth";
 import { NavLink } from "./nav-link";
+import { canManageMembers, canViewAuditLogs } from "@/lib/rbac";
 
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard" },
@@ -16,6 +17,12 @@ export default async function AppLayout({
 }) {
   const session = await auth();
   const initial = session?.user?.name?.charAt(0)?.toUpperCase() ?? "?";
+  const role = session?.user?.role as never;
+  const navItems = [
+    ...NAV_ITEMS,
+    ...(canManageMembers(role) ? [{ href: "/admin/users", label: "Team Members" }] : []),
+    ...(canViewAuditLogs(role) ? [{ href: "/admin/audit-logs", label: "Audit Log" }] : []),
+  ];
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -26,7 +33,7 @@ export default async function AppLayout({
             PM SaaS
           </div>
           <nav className="relative z-10 space-y-1">
-            {NAV_ITEMS.map((item) => (
+            {navItems.map((item) => (
               <NavLink key={item.href} href={item.href} label={item.label} />
             ))}
           </nav>

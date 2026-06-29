@@ -18,3 +18,7 @@ export const canForwardOrAssignRevision = (role: Role) =>
 
 export const canMarkReadyForReview = (role: Role) =>
   role === "admin" || role === "project_manager" || role === "team_member";
+
+export const canManageMembers = (role: Role) => role === "admin";
+
+export const canViewAuditLogs = (role: Role) => role === "admin";

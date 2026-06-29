@@ -9,6 +9,7 @@ import {
   type serviceTypeEnum,
 } from "@/db/schema";
 import { canManageLeads } from "@/lib/rbac";
+import { logAudit } from "@/lib/audit";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -44,14 +45,25 @@ export async function createLead(formData: FormData) {
     notes: formData.get("notes") || undefined,
   });
 
-  await db.insert(leads).values({
-    name: parsed.name,
-    email: parsed.email || null,
-    phone: parsed.phone,
-    source: parsed.source,
-    serviceInterest: parsed.serviceInterest as (typeof serviceTypeEnum.enumValues)[number],
-    notes: parsed.notes,
-    assignedManagerId: session.user.id,
+  const [lead] = await db
+    .insert(leads)
+    .values({
+      name: parsed.name,
+      email: parsed.email || null,
+      phone: parsed.phone,
+      source: parsed.source,
+      serviceInterest: parsed.serviceInterest as (typeof serviceTypeEnum.enumValues)[number],
+      notes: parsed.notes,
+      assignedManagerId: session.user.id,
+    })
+    .returning();
+
+  await logAudit({
+    actorId: session.user.id,
+    actorEmail: session.user.email,
+    action: "lead_created",
+    entityType: "lead",
+    entityId: lead.id,
   });
 
   revalidatePath("/leads");
@@ -69,6 +81,15 @@ export async function updateLeadStatus(leadId: string, formData: FormData) {
     .update(leads)
     .set({ status, updatedAt: new Date() })
     .where(eq(leads.id, leadId));
+
+  await logAudit({
+    actorId: session.user.id,
+    actorEmail: session.user.email,
+    action: "lead_status_updated",
+    entityType: "lead",
+    entityId: leadId,
+    metadata: { status },
+  });
 
   revalidatePath("/leads");
 }
@@ -97,6 +118,15 @@ export async function convertLeadToClient(leadId: string) {
     .update(leads)
     .set({ status: "converted", convertedClientId: client.id, updatedAt: new Date() })
     .where(eq(leads.id, leadId));
+
+  await logAudit({
+    actorId: session.user.id,
+    actorEmail: session.user.email,
+    action: "lead_converted_to_client",
+    entityType: "client",
+    entityId: client.id,
+    metadata: { leadId },
+  });
 
   revalidatePath("/leads");
   redirect(`/clients/${client.id}`);
