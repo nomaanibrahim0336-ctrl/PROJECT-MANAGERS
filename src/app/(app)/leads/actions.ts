@@ -6,7 +6,6 @@ import {
   clients,
   leads,
   type leadStatusEnum,
-  type serviceTypeEnum,
 } from "@/db/schema";
 import { canManageLeads } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
@@ -20,13 +19,7 @@ const createLeadSchema = z.object({
   email: z.string().email().optional().or(z.literal("")),
   phone: z.string().optional(),
   source: z.string().optional(),
-  serviceInterest: z.enum([
-    "book_publishing",
-    "social_media_marketing",
-    "book_cover_design",
-    "website_development",
-    "custom",
-  ]),
+  serviceCatalogIds: z.array(z.string().uuid()).min(1, "Select at least one service"),
   notes: z.string().optional(),
 });
 
@@ -41,7 +34,7 @@ export async function createLead(formData: FormData) {
     email: formData.get("email") || "",
     phone: formData.get("phone") || undefined,
     source: formData.get("source") || undefined,
-    serviceInterest: formData.get("serviceInterest"),
+    serviceCatalogIds: formData.getAll("serviceCatalogIds"),
     notes: formData.get("notes") || undefined,
   });
 
@@ -52,7 +45,7 @@ export async function createLead(formData: FormData) {
       email: parsed.email || null,
       phone: parsed.phone,
       source: parsed.source,
-      serviceInterest: parsed.serviceInterest as (typeof serviceTypeEnum.enumValues)[number],
+      serviceCatalogIds: parsed.serviceCatalogIds,
       notes: parsed.notes,
       assignedManagerId: session.user.id,
     })
@@ -111,6 +104,7 @@ export async function convertLeadToClient(leadId: string) {
       phone: lead.phone,
       notes: lead.notes,
       sourceLeadId: lead.id,
+      servicesEngagedIds: lead.serviceCatalogIds,
     })
     .returning();
 

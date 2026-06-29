@@ -32,7 +32,12 @@ export default async function ClientDetailPage({
     .where(eq(tickets.clientId, id))
     .orderBy(desc(tickets.createdAt));
 
-  const services = await db.select().from(serviceCatalog).orderBy(serviceCatalog.name);
+  const allServices = await db.select().from(serviceCatalog).orderBy(serviceCatalog.name);
+  const engagedServices =
+    client.servicesEngagedIds.length > 0
+      ? allServices.filter((s) => client.servicesEngagedIds.includes(s.id))
+      : [];
+  const ticketServiceOptions = engagedServices.length > 0 ? engagedServices : allServices;
 
   return (
     <div className="mx-auto max-w-3xl space-y-8 p-8">
@@ -41,6 +46,15 @@ export default async function ClientDetailPage({
         <p className="text-sm text-(--color-slate)">{client.email}</p>
         <p className="text-sm text-(--color-slate)">{client.phone}</p>
         {client.notes && <p className="mt-4 text-sm text-(--color-ink)">{client.notes}</p>}
+        {engagedServices.length > 0 && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {engagedServices.map((s) => (
+              <span key={s.id} className="badge bg-[#EEF1F6] text-(--color-slate)">
+                {s.name}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       <section>
@@ -74,7 +88,7 @@ export default async function ClientDetailPage({
             <input type="hidden" name="clientId" value={client.id} />
             <select name="serviceCatalogId" required className="field-input block w-full">
               <option value="">Select a service from the catalog...</option>
-              {services.map((service) => (
+              {ticketServiceOptions.map((service) => (
                 <option key={service.id} value={service.id}>
                   {service.name}
                 </option>

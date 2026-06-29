@@ -22,6 +22,20 @@
       "when": 1782768681030,
       "tag": "0002_nappy_lady_deathstrike",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1782769359129,
+      "tag": "0003_chubby_scourge",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1782769368930,
+      "tag": "0004_elite_photon",
+      "breakpoints": true
     }
   ]
 }

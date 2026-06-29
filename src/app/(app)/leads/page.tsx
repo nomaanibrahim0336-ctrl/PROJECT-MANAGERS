@@ -1,19 +1,14 @@
 import { db } from "@/db";
-import { leads } from "@/db/schema";
+import { leads, serviceCatalog } from "@/db/schema";
 import { desc } from "drizzle-orm";
 import { createLead, convertLeadToClient, updateLeadStatus } from "./actions";
 
 const STATUS_OPTIONS = ["new", "contacted", "qualified", "converted", "lost"] as const;
-const SERVICE_OPTIONS = [
-  "book_publishing",
-  "social_media_marketing",
-  "book_cover_design",
-  "website_development",
-  "custom",
-] as const;
 
 export default async function LeadsPage() {
   const allLeads = await db.select().from(leads).orderBy(desc(leads.createdAt));
+  const services = await db.select().from(serviceCatalog).orderBy(serviceCatalog.name);
+  const serviceNameById = new Map(services.map((s) => [s.id, s.name]));
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 p-8">
@@ -24,13 +19,17 @@ export default async function LeadsPage() {
         <input name="email" type="email" placeholder="Email" className="field-input" />
         <input name="phone" placeholder="Phone" className="field-input" />
         <input name="source" placeholder="Source" className="field-input" />
-        <select name="serviceInterest" required className="field-input">
-          {SERVICE_OPTIONS.map((s) => (
-            <option key={s} value={s}>
-              {s.replace(/_/g, " ")}
-            </option>
-          ))}
-        </select>
+        <fieldset className="col-span-2 space-y-2">
+          <legend className="text-sm font-medium text-(--color-ink)">Services Interested In</legend>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {services.map((s) => (
+              <label key={s.id} className="flex items-center gap-2 text-sm text-(--color-slate)">
+                <input type="checkbox" name="serviceCatalogIds" value={s.id} className="rounded border-(--color-border)" />
+                {s.name}
+              </label>
+            ))}
+          </div>
+        </fieldset>
         <textarea name="notes" placeholder="Notes" className="field-input col-span-2" />
         <button type="submit" className="btn-primary col-span-2">
           Add Lead
@@ -51,7 +50,9 @@ export default async function LeadsPage() {
             {allLeads.map((lead) => (
               <tr key={lead.id} className="border-b border-(--color-border) last:border-0">
                 <td className="px-6 py-3 font-medium text-(--color-ink)">{lead.name}</td>
-                <td className="px-6 py-3 text-(--color-slate)">{lead.serviceInterest.replace(/_/g, " ")}</td>
+                <td className="px-6 py-3 text-(--color-slate)">
+                  {lead.serviceCatalogIds.map((id) => serviceNameById.get(id) ?? "Unknown").join(", ") || "—"}
+                </td>
                 <td className="px-6 py-3">
                   <form action={updateLeadStatus.bind(null, lead.id)}>
                     <select
