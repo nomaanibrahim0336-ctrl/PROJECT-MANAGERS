@@ -1,8 +1,8 @@
 import { auth } from "@/auth";
 import { db } from "@/db";
-import { clients, serviceCatalog, tickets } from "@/db/schema";
+import { clients, serviceCatalog, tickets, users } from "@/db/schema";
 import { canCreateTicket } from "@/lib/rbac";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { createTicket } from "../../tickets/actions";
 
@@ -38,6 +38,14 @@ export default async function ClientDetailPage({
       ? allServices.filter((s) => client.servicesEngagedIds.includes(s.id))
       : [];
   const ticketServiceOptions = engagedServices.length > 0 ? engagedServices : allServices;
+
+  const teamMembers = canCreateTicket(role as never)
+    ? await db
+        .select({ id: users.id, name: users.name, department: users.department })
+        .from(users)
+        .where(and(isNull(users.deletedAt), eq(users.status, "active")))
+        .orderBy(users.department, users.name)
+    : [];
 
   return (
     <div className="mx-auto max-w-3xl space-y-8 p-8">
@@ -100,6 +108,14 @@ export default async function ClientDetailPage({
               <option value="development">Development</option>
               <option value="marketing">Marketing</option>
               <option value="general">General</option>
+            </select>
+            <select name="assignedToId" className="field-input block w-full">
+              <option value="">Unassigned (assign later)</option>
+              {teamMembers.map((member) => (
+                <option key={member.id} value={member.id}>
+                  {member.name} ({member.department})
+                </option>
+              ))}
             </select>
             <textarea
               name="brief"

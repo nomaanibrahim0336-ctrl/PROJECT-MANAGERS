@@ -1,14 +1,15 @@
 import { auth } from "@/auth";
 import { db } from "@/db";
 import { clients, deliverables, ticketClientFeedback, ticketInternalComments, tickets, users } from "@/db/schema";
-import { canForwardOrAssignRevision, canMarkReadyForReview } from "@/lib/rbac";
-import { desc, eq } from "drizzle-orm";
+import { canCreateTicket, canForwardOrAssignRevision, canMarkReadyForReview } from "@/lib/rbac";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import {
   addInternalComment,
   assignRevision,
   forwardToClient,
   markReadyForReview,
+  reassignTicket,
 } from "../actions";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -40,6 +41,18 @@ export default async function TicketDetailPage({
   if (!ticket) notFound();
 
   const [client] = await db.select().from(clients).where(eq(clients.id, ticket.clientId)).limit(1);
+
+  const [assignee] = ticket.assignedToId
+    ? await db.select({ name: users.name }).from(users).where(eq(users.id, ticket.assignedToId)).limit(1)
+    : [];
+
+  const teamMembers = canCreateTicket(role as never)
+    ? await db
+        .select({ id: users.id, name: users.name, department: users.department })
+        .from(users)
+        .where(and(isNull(users.deletedAt), eq(users.status, "active")))
+        .orderBy(users.department, users.name)
+    : [];
 
   const ticketDeliverables = await db
     .select({ deliverable: deliverables, uploaderName: users.name })
@@ -83,6 +96,29 @@ export default async function TicketDetailPage({
         <p className="mt-1 text-xs text-(--color-slate)">
           Client approval link: /portal/ticket/{ticket.clientAccessToken}
         </p>
+
+        {canCreateTicket(role as never) ? (
+          <form action={reassignTicket.bind(null, ticket.id)} className="mt-3 flex items-center gap-2">
+            <label className="text-xs text-(--color-slate)">Assigned to:</label>
+            <select
+              name="assignedToId"
+              defaultValue={ticket.assignedToId ?? ""}
+              onChange={(e) => e.currentTarget.form?.requestSubmit()}
+              className="field-input py-1 text-xs"
+            >
+              <option value="">Unassigned</option>
+              {teamMembers.map((member) => (
+                <option key={member.id} value={member.id}>
+                  {member.name} ({member.department})
+                </option>
+              ))}
+            </select>
+          </form>
+        ) : (
+          <p className="mt-2 text-xs text-(--color-slate)">
+            Assigned to: {assignee?.name ?? "Unassigned"}
+          </p>
+        )}
       </div>
 
       {/* Zone 2: Brief */}

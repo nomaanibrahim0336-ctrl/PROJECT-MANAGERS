@@ -150,6 +150,7 @@ export const tickets = pgTable("tickets", {
   createdByPmId: uuid("created_by_pm_id")
     .notNull()
     .references(() => users.id),
+  assignedToId: uuid("assigned_to_id").references(() => users.id),
   clientAccessToken: uuid("client_access_token").notNull().defaultRandom().unique(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),

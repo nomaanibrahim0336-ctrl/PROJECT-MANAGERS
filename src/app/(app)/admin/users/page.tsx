@@ -67,7 +67,8 @@ export default async function UsersAdminPage({
               </option>
             ))}
           </select>
-          <select name="department" required className="field-input">
+          <select name="department" className="field-input">
+            <option value="">No specific department (e.g. PM/Admin)</option>
             {DEPARTMENTS.map((d) => (
               <option key={d} value={d}>
                 {d}
@@ -116,6 +117,7 @@ export default async function UsersAdminPage({
                   ))}
                 </select>
                 <select name="department" defaultValue={user.department} className="field-input">
+                  <option value="">No specific department</option>
                   {DEPARTMENTS.map((d) => (
                     <option key={d} value={d}>
                       {d}

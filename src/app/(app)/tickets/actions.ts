@@ -24,6 +24,7 @@ const createTicketSchema = z.object({
   clientId: z.string().uuid(),
   serviceCatalogId: z.string().uuid(),
   department: z.enum(["publishing", "design", "development", "marketing", "general"]),
+  assignedToId: z.string().uuid().optional(),
   brief: z.string().min(1),
   deadline: z.string().optional(),
 });
@@ -38,6 +39,7 @@ export async function createTicket(formData: FormData) {
     clientId: formData.get("clientId"),
     serviceCatalogId: formData.get("serviceCatalogId"),
     department: formData.get("department"),
+    assignedToId: formData.get("assignedToId") || undefined,
     brief: formData.get("brief"),
     deadline: formData.get("deadline") || undefined,
   });
@@ -56,6 +58,7 @@ export async function createTicket(formData: FormData) {
       serviceCatalogId: service.id,
       serviceName: service.name,
       department: parsed.department,
+      assignedToId: parsed.assignedToId ?? null,
       brief: parsed.brief,
       deadline: parsed.deadline ? new Date(parsed.deadline) : null,
       createdByPmId: session.user.id,
@@ -108,6 +111,28 @@ export async function markReadyForReview(ticketId: string, formData: FormData) {
     action: "ticket_marked_ready",
     entityType: "ticket",
     entityId: ticketId,
+  });
+
+  revalidatePath(`/tickets/${ticketId}`);
+}
+
+export async function reassignTicket(ticketId: string, formData: FormData) {
+  const session = await auth();
+  if (!session?.user || !canCreateTicket(session.user.role as never)) {
+    throw new Error("Forbidden");
+  }
+
+  const assignedToId = (formData.get("assignedToId") as string) || null;
+
+  await db.update(tickets).set({ assignedToId, updatedAt: new Date() }).where(eq(tickets.id, ticketId));
+
+  await logAudit({
+    actorId: session.user.id,
+    actorEmail: session.user.email,
+    action: "ticket_reassigned",
+    entityType: "ticket",
+    entityId: ticketId,
+    metadata: { assignedToId },
   });
 
   revalidatePath(`/tickets/${ticketId}`);

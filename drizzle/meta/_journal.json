@@ -36,6 +36,13 @@
       "when": 1782769368930,
       "tag": "0004_elite_photon",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1782771963911,
+      "tag": "0005_deep_silver_sable",
+      "breakpoints": true
     }
   ]
 }

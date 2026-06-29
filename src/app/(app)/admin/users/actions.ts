@@ -27,7 +27,7 @@ const createMemberSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
   role: z.enum(ROLES),
-  department: z.enum(DEPARTMENTS),
+  department: z.enum(DEPARTMENTS).optional(),
 });
 
 export async function createMember(formData: FormData) {
@@ -37,8 +37,9 @@ export async function createMember(formData: FormData) {
     name: formData.get("name"),
     email: formData.get("email"),
     role: formData.get("role"),
-    department: formData.get("department"),
+    department: formData.get("department") || undefined,
   });
+  const department = parsed.department ?? "general";
 
   const [existing] = await db.select().from(users).where(eq(users.email, parsed.email)).limit(1);
   if (existing) throw new Error("A user with this email already exists");
@@ -53,7 +54,7 @@ export async function createMember(formData: FormData) {
       email: parsed.email,
       passwordHash,
       role: parsed.role,
-      department: parsed.department,
+      department,
     })
     .returning();
 
@@ -73,7 +74,7 @@ export async function createMember(formData: FormData) {
 const editMemberSchema = z.object({
   name: z.string().min(1),
   role: z.enum(ROLES),
-  department: z.enum(DEPARTMENTS),
+  department: z.enum(DEPARTMENTS).optional(),
 });
 
 export async function editMember(userId: string, formData: FormData) {
@@ -82,15 +83,16 @@ export async function editMember(userId: string, formData: FormData) {
   const parsed = editMemberSchema.parse({
     name: formData.get("name"),
     role: formData.get("role"),
-    department: formData.get("department"),
+    department: formData.get("department") || undefined,
   });
+  const department = parsed.department ?? "general";
 
   const [before] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
   if (!before) throw new Error("User not found");
 
   await db
     .update(users)
-    .set({ name: parsed.name, role: parsed.role, department: parsed.department, updatedAt: new Date() })
+    .set({ name: parsed.name, role: parsed.role, department, updatedAt: new Date() })
     .where(eq(users.id, userId));
 
   await logAudit({
@@ -101,7 +103,7 @@ export async function editMember(userId: string, formData: FormData) {
     entityId: userId,
     metadata: {
       before: { name: before.name, role: before.role, department: before.department },
-      after: parsed,
+      after: { name: parsed.name, role: parsed.role, department },
     },
   });
 
