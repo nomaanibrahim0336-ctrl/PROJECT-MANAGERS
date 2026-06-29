@@ -22,3 +22,6 @@ export const canMarkReadyForReview = (role: Role) =>
 export const canManageMembers = (role: Role) => role === "admin";
 
 export const canViewAuditLogs = (role: Role) => role === "admin";
+
+export const canViewPmPanel = (role: Role) =>
+  role === "admin" || role === "project_manager";

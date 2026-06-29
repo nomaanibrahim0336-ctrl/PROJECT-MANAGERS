@@ -2,9 +2,11 @@ import { auth } from "@/auth";
 import { db } from "@/db";
 import { clients, leads, tickets } from "@/db/schema";
 import { avg, count, eq, ne, sql } from "drizzle-orm";
+import { redirect } from "next/navigation";
 
 export default async function DashboardPage() {
   const session = await auth();
+  if (session?.user?.role === "project_manager") redirect("/pm");
   const [{ value: leadCount }] = await db.select({ value: count() }).from(leads);
   const [{ value: clientCount }] = await db.select({ value: count() }).from(clients);
   const [{ value: activeTicketCount }] = await db

@@ -1,14 +1,7 @@
 import Link from "next/link";
 import { auth, signOut } from "@/auth";
 import { NavLink } from "./nav-link";
-import { canManageMembers, canViewAuditLogs } from "@/lib/rbac";
-
-const NAV_ITEMS = [
-  { href: "/", label: "Dashboard" },
-  { href: "/leads", label: "Leads" },
-  { href: "/clients", label: "Clients" },
-  { href: "/admin/services", label: "Service Catalog" },
-];
+import { canManageMembers, canViewAuditLogs, canViewPmPanel } from "@/lib/rbac";
 
 export default async function AppLayout({
   children,
@@ -18,8 +11,15 @@ export default async function AppLayout({
   const session = await auth();
   const initial = session?.user?.name?.charAt(0)?.toUpperCase() ?? "?";
   const role = session?.user?.role as never;
+
   const navItems = [
-    ...NAV_ITEMS,
+    canViewPmPanel(role)
+      ? { href: "/pm", label: "My Panel" }
+      : { href: "/", label: "Dashboard" },
+    ...(role === "admin" ? [{ href: "/", label: "Dashboard" }] : []),
+    { href: "/leads", label: "Leads" },
+    { href: "/clients", label: "Clients" },
+    ...(role === "admin" ? [{ href: "/admin/services", label: "Service Catalog" }] : []),
     ...(canManageMembers(role) ? [{ href: "/admin/users", label: "Team Members" }] : []),
     ...(canViewAuditLogs(role) ? [{ href: "/admin/audit-logs", label: "Audit Log" }] : []),
   ];
