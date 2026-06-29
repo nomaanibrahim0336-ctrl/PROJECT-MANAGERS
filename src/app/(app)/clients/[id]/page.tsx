@@ -36,15 +36,15 @@ export default async function ClientDetailPage({
 
   return (
     <div className="mx-auto max-w-3xl space-y-8 p-8">
-      <div>
-        <h1 className="mb-2 text-2xl font-semibold text-gray-900">{client.companyOrName}</h1>
-        <p className="text-sm text-gray-500">{client.email}</p>
-        <p className="text-sm text-gray-500">{client.phone}</p>
-        {client.notes && <p className="mt-4 text-sm text-gray-700">{client.notes}</p>}
+      <div className="surface-card p-6">
+        <h1 className="mb-2 text-[18px] font-semibold text-(--color-ink)">{client.companyOrName}</h1>
+        <p className="text-sm text-(--color-slate)">{client.email}</p>
+        <p className="text-sm text-(--color-slate)">{client.phone}</p>
+        {client.notes && <p className="mt-4 text-sm text-(--color-ink)">{client.notes}</p>}
       </div>
 
       <section>
-        <h2 className="mb-3 text-sm font-semibold text-gray-700">
+        <h2 className="mb-3 text-sm font-semibold text-(--color-ink)">
           All Active Services for {client.companyOrName}
         </h2>
         <ul className="space-y-2">
@@ -52,31 +52,27 @@ export default async function ClientDetailPage({
             <li key={ticket.id}>
               <a
                 href={`/tickets/${ticket.id}`}
-                className="flex items-center justify-between rounded-md border border-gray-200 p-3 text-sm hover:bg-gray-50"
+                className="surface-card flex items-center justify-between p-4 text-sm"
               >
-                <span className="font-medium text-gray-900">{ticket.serviceName}</span>
-                <span className="text-xs text-gray-500">
+                <span className="font-medium text-(--color-ink)">{ticket.serviceName}</span>
+                <span className="text-xs text-(--color-slate)">
                   {STATUS_LABELS[ticket.status]} · V{ticket.revisionNumber}
                 </span>
               </a>
             </li>
           ))}
           {clientTickets.length === 0 && (
-            <p className="text-sm text-gray-400">No services yet for this client.</p>
+            <p className="text-sm text-(--color-slate)">No services yet for this client.</p>
           )}
         </ul>
       </section>
 
       {canCreateTicket(role as never) && (
-        <section className="border-t border-gray-200 pt-6">
-          <h2 className="mb-3 text-sm font-semibold text-gray-700">+ Add New Service</h2>
+        <section className="surface-card space-y-3 p-6">
+          <h2 className="text-sm font-semibold text-(--color-ink)">+ Add New Service</h2>
           <form action={createTicket} className="space-y-2">
             <input type="hidden" name="clientId" value={client.id} />
-            <select
-              name="serviceCatalogId"
-              required
-              className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-            >
+            <select name="serviceCatalogId" required className="field-input block w-full">
               <option value="">Select a service from the catalog...</option>
               {services.map((service) => (
                 <option key={service.id} value={service.id}>
@@ -84,11 +80,7 @@ export default async function ClientDetailPage({
                 </option>
               ))}
             </select>
-            <select
-              name="department"
-              required
-              className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-            >
+            <select name="department" required className="field-input block w-full">
               <option value="publishing">Publishing</option>
               <option value="design">Design</option>
               <option value="development">Development</option>
@@ -99,17 +91,11 @@ export default async function ClientDetailPage({
               name="brief"
               placeholder="Brief / instructions for the team"
               required
-              className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className="field-input block w-full"
               rows={3}
             />
-            <input
-              type="date"
-              name="deadline"
-              className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-            />
-            <button className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white">
-              Create
-            </button>
+            <input type="date" name="deadline" className="field-input block w-full" />
+            <button className="btn-primary">Create</button>
           </form>
         </section>
       )}

@@ -24,7 +24,7 @@ const STATUS_COLORS: Record<string, string> = {
   pending_pm_review: "bg-amber-100 text-amber-800",
   pending_client_approval: "bg-purple-100 text-purple-800",
   revision_required: "bg-red-100 text-red-800",
-  approved: "bg-green-100 text-green-800",
+  approved: "badge-positive",
 };
 
 export default async function TicketDetailPage({
@@ -64,54 +64,52 @@ export default async function TicketDetailPage({
   return (
     <div className="mx-auto max-w-4xl space-y-8 p-8">
       {/* Zone 1: Header */}
-      <div>
+      <div className="surface-card p-6">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-semibold text-gray-900">{ticket.serviceName}</h1>
-          <span className={`rounded-full px-3 py-1 text-xs font-medium ${STATUS_COLORS[ticket.status]}`}>
+          <h1 className="text-[18px] font-semibold text-(--color-ink)">{ticket.serviceName}</h1>
+          <span className={`badge ${STATUS_COLORS[ticket.status]}`}>
             {STATUS_LABELS[ticket.status]}
           </span>
-          <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
-            V{ticket.revisionNumber}
-          </span>
+          <span className="badge bg-[#EEF1F6] text-(--color-slate)">V{ticket.revisionNumber}</span>
         </div>
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-1 text-sm text-(--color-slate)">
           Client:{" "}
-          <a href={`/clients/${ticket.clientId}`} className="underline">
+          <a href={`/clients/${ticket.clientId}`} className="text-(--color-cobalt) hover:underline">
             {client?.companyOrName}
           </a>{" "}
           · Department: {ticket.department}
           {ticket.deadline && ` · Deadline: ${new Date(ticket.deadline).toLocaleDateString()}`}
         </p>
-        <p className="mt-1 text-xs text-gray-400">
+        <p className="mt-1 text-xs text-(--color-slate)">
           Client approval link: /portal/ticket/{ticket.clientAccessToken}
         </p>
       </div>
 
       {/* Zone 2: Brief */}
       <section>
-        <h2 className="mb-2 text-sm font-semibold text-gray-700">Brief</h2>
-        <p className="whitespace-pre-wrap rounded-md border border-gray-200 bg-gray-50 p-4 text-sm text-gray-800">
+        <h2 className="mb-2 text-sm font-semibold text-(--color-ink)">Brief</h2>
+        <p className="surface-card whitespace-pre-wrap p-4 text-sm text-(--color-ink)">
           {ticket.brief}
         </p>
       </section>
 
       {/* Zone 3: Deliverable History */}
       <section>
-        <h2 className="mb-2 text-sm font-semibold text-gray-700">Deliverable History</h2>
+        <h2 className="mb-2 text-sm font-semibold text-(--color-ink)">Deliverable History</h2>
         <ul className="space-y-2">
           {ticketDeliverables.map(({ deliverable, uploaderName }) => (
-            <li key={deliverable.id} className="rounded-md border border-gray-200 p-3 text-sm">
-              <div className="flex justify-between text-xs text-gray-500">
+            <li key={deliverable.id} className="surface-card p-3 text-sm">
+              <div className="flex justify-between text-xs text-(--color-slate)">
                 <span>
                   {uploaderName} · V{deliverable.revisionNumber} · {deliverable.kind}
                 </span>
                 <span>{new Date(deliverable.createdAt).toLocaleString()}</span>
               </div>
-              <p className="mt-1 text-gray-800">{deliverable.content}</p>
+              <p className="mt-1 text-(--color-ink)">{deliverable.content}</p>
             </li>
           ))}
           {ticketDeliverables.length === 0 && (
-            <p className="text-sm text-gray-400">No deliverables uploaded yet.</p>
+            <p className="text-sm text-(--color-slate)">No deliverables uploaded yet.</p>
           )}
         </ul>
       </section>
@@ -119,68 +117,66 @@ export default async function TicketDetailPage({
       {/* Zone 4: Internal Chat (PM + Team only, not client) */}
       {role !== "client" && (
         <section>
-          <h2 className="mb-2 text-sm font-semibold text-gray-700">Internal Chat (not visible to client)</h2>
+          <h2 className="mb-2 text-sm font-semibold text-(--color-ink)">Internal Chat (not visible to client)</h2>
           <ul className="space-y-2">
             {internalComments.map(({ comment, authorName }) => (
               <li
                 key={comment.id}
-                className={`rounded-md border p-3 text-sm ${
-                  comment.isRevisionInstruction ? "border-amber-300 bg-amber-50" : "border-gray-200"
+                className={`surface-card p-3 text-sm ${
+                  comment.isRevisionInstruction ? "border-amber-300 bg-amber-50" : ""
                 }`}
               >
-                <div className="flex justify-between text-xs text-gray-500">
+                <div className="flex justify-between text-xs text-(--color-slate)">
                   <span>
                     {authorName} · V{comment.revisionNumber}
                     {comment.isRevisionInstruction && " · Revision Instructions"}
                   </span>
                   <span>{new Date(comment.createdAt).toLocaleString()}</span>
                 </div>
-                <p className="mt-1 text-gray-800">{comment.body}</p>
+                <p className="mt-1 text-(--color-ink)">{comment.body}</p>
               </li>
             ))}
             {internalComments.length === 0 && (
-              <p className="text-sm text-gray-400">No internal comments yet.</p>
+              <p className="text-sm text-(--color-slate)">No internal comments yet.</p>
             )}
           </ul>
           <form action={addInternalComment.bind(null, ticket.id)} className="mt-3 flex gap-2">
             <input
               name="body"
               placeholder="Write an internal comment..."
-              className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className="field-input flex-1"
             />
-            <button className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white">
-              Post
-            </button>
+            <button className="btn-primary">Post</button>
           </form>
         </section>
       )}
 
       {/* Zone 5: Client Feedback Board */}
       <section>
-        <h2 className="mb-2 text-sm font-semibold text-gray-700">Client Feedback</h2>
+        <h2 className="mb-2 text-sm font-semibold text-(--color-ink)">Client Feedback</h2>
         <ul className="space-y-2">
           {clientFeedback.map((feedback) => (
-            <li key={feedback.id} className="rounded-md border border-gray-200 bg-gray-50 p-3 text-sm">
-              <div className="flex justify-between text-xs text-gray-500">
+            <li key={feedback.id} className="surface-card p-3 text-sm">
+              <div className="flex justify-between text-xs text-(--color-slate)">
                 <span>V{feedback.revisionNumber}</span>
                 <span>{new Date(feedback.createdAt).toLocaleString()}</span>
               </div>
-              <p className="mt-1 text-gray-800">{feedback.body}</p>
+              <p className="mt-1 text-(--color-ink)">{feedback.body}</p>
             </li>
           ))}
           {clientFeedback.length === 0 && (
-            <p className="text-sm text-gray-400">No client feedback yet.</p>
+            <p className="text-sm text-(--color-slate)">No client feedback yet.</p>
           )}
         </ul>
       </section>
 
       {/* Zone 6: Action Buttons */}
-      <section className="border-t border-gray-200 pt-6">
-        <h2 className="mb-3 text-sm font-semibold text-gray-700">Actions</h2>
+      <section className="surface-card space-y-3 p-6">
+        <h2 className="text-sm font-semibold text-(--color-ink)">Actions</h2>
 
         {ticket.status === "in_progress" && canMarkReadyForReview(role as never) && (
           <form action={markReadyForReview.bind(null, ticket.id)} className="space-y-2">
-            <select name="kind" className="rounded-md border border-gray-300 px-3 py-2 text-sm">
+            <select name="kind" className="field-input">
               <option value="link">Staging / File Link</option>
               <option value="file">File</option>
               <option value="data">Data Fields</option>
@@ -188,24 +184,20 @@ export default async function TicketDetailPage({
             <input
               name="content"
               placeholder="Paste deliverable link or notes"
-              className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className="field-input block w-full"
             />
-            <button className="rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-white">
-              Mark as Ready for PM Review
-            </button>
+            <button className="btn-primary">Mark as Ready for PM Review</button>
           </form>
         )}
 
         {ticket.status === "pending_pm_review" && canForwardOrAssignRevision(role as never) && (
           <form action={forwardToClient.bind(null, ticket.id)}>
-            <button className="rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white">
-              Forward to Client for Approval
-            </button>
+            <button className="btn-primary">Forward to Client for Approval</button>
           </form>
         )}
 
         {ticket.status === "pending_client_approval" && (
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-(--color-slate)">
             Waiting on the client. All internal actions are disabled until they respond.
           </p>
         )}
@@ -216,17 +208,15 @@ export default async function TicketDetailPage({
               name="instructions"
               placeholder="Internal technical instructions for the team"
               required
-              className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className="field-input block w-full"
               rows={3}
             />
-            <button className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white">
-              Assign Revision to Team
-            </button>
+            <button className="btn-primary">Assign Revision to Team</button>
           </form>
         )}
 
         {ticket.status === "approved" && (
-          <p className="text-sm text-green-700">This service has been approved by the client.</p>
+          <p className="badge badge-positive">This service has been approved by the client.</p>
         )}
       </section>
     </div>

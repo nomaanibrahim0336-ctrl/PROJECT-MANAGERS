@@ -8,39 +8,40 @@ export default async function LoginPage({
   const { callbackUrl } = await searchParams;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#0F172A] to-[#1E293B] p-4">
       <form
         action={loginAction}
-        className="w-full max-w-sm space-y-4 rounded-lg border border-gray-200 bg-white p-8 shadow-sm"
+        className="surface-card w-full max-w-sm space-y-4 p-8"
       >
-        <h1 className="text-xl font-semibold text-gray-900">Sign in</h1>
+        <div className="mb-2">
+          <div className="accent-bar mb-4 rounded-full" />
+          <h1 className="text-[18px] font-semibold text-(--color-ink)">Sign in</h1>
+          <p className="text-sm text-(--color-slate)">Welcome back to PM SaaS</p>
+        </div>
         <input type="hidden" name="callbackUrl" value={callbackUrl ?? "/"} />
         <div>
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-(--color-ink)">
             Email
           </label>
           <input
             type="email"
             name="email"
             required
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+            className="field-input mt-1 w-full"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-(--color-ink)">
             Password
           </label>
           <input
             type="password"
             name="password"
             required
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+            className="field-input mt-1 w-full"
           />
         </div>
-        <button
-          type="submit"
-          className="w-full rounded-md bg-gray-900 px-3 py-2 text-sm font-medium text-white hover:bg-gray-800"
-        >
+        <button type="submit" className="btn-primary w-full">
           Sign in
         </button>
       </form>
