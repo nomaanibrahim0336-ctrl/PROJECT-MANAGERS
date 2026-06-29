@@ -7,3 +7,14 @@ export const canViewFinancials = (role: Role) =>
   role === "admin" || role === "project_manager";
 
 export const canManageUsers = (role: Role) => role === "admin";
+
+export const canManageServiceCatalog = (role: Role) => role === "admin";
+
+export const canCreateTicket = (role: Role) =>
+  role === "admin" || role === "project_manager";
+
+export const canForwardOrAssignRevision = (role: Role) =>
+  role === "admin" || role === "project_manager";
+
+export const canMarkReadyForReview = (role: Role) =>
+  role === "admin" || role === "project_manager" || role === "team_member";

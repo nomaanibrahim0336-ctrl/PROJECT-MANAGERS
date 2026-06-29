@@ -5,6 +5,7 @@ const NAV_ITEMS = [
   { href: "/", label: "Dashboard" },
   { href: "/leads", label: "Leads" },
   { href: "/clients", label: "Clients" },
+  { href: "/admin/services", label: "Service Catalog" },
 ];
 
 export default async function AppLayout({
