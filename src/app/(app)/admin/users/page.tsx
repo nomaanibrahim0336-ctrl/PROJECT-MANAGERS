@@ -109,6 +109,7 @@ export default async function UsersAdminPage({
 
               <form action={editMember.bind(null, user.id)} className="grid grid-cols-3 gap-2">
                 <input name="name" defaultValue={user.name} className="field-input" />
+                <input name="email" type="email" defaultValue={user.email} className="field-input" />
                 <select name="role" defaultValue={user.role} className="field-input">
                   {ROLES.map((r) => (
                     <option key={r} value={r}>
@@ -116,7 +117,7 @@ export default async function UsersAdminPage({
                     </option>
                   ))}
                 </select>
-                <select name="department" defaultValue={user.department} className="field-input">
+                <select name="department" defaultValue={user.department ?? ""} className="field-input col-span-3">
                   <option value="">No specific department</option>
                   {DEPARTMENTS.map((d) => (
                     <option key={d} value={d}>

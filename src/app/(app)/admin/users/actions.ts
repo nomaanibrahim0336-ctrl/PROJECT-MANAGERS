@@ -73,6 +73,7 @@ export async function createMember(formData: FormData) {
 
 const editMemberSchema = z.object({
   name: z.string().min(1),
+  email: z.string().email(),
   role: z.enum(ROLES),
   department: z.enum(DEPARTMENTS).optional(),
 });
@@ -82,6 +83,7 @@ export async function editMember(userId: string, formData: FormData) {
 
   const parsed = editMemberSchema.parse({
     name: formData.get("name"),
+    email: formData.get("email"),
     role: formData.get("role"),
     department: formData.get("department") || undefined,
   });
@@ -90,9 +92,15 @@ export async function editMember(userId: string, formData: FormData) {
   const [before] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
   if (!before) throw new Error("User not found");
 
+  // Check email uniqueness if changed
+  if (parsed.email !== before.email) {
+    const [conflict] = await db.select({ id: users.id }).from(users).where(eq(users.email, parsed.email)).limit(1);
+    if (conflict) throw new Error("That email is already in use");
+  }
+
   await db
     .update(users)
-    .set({ name: parsed.name, role: parsed.role, department, updatedAt: new Date() })
+    .set({ name: parsed.name, email: parsed.email, role: parsed.role, department, updatedAt: new Date() })
     .where(eq(users.id, userId));
 
   await logAudit({
@@ -102,8 +110,8 @@ export async function editMember(userId: string, formData: FormData) {
     entityType: "user",
     entityId: userId,
     metadata: {
-      before: { name: before.name, role: before.role, department: before.department },
-      after: { name: parsed.name, role: parsed.role, department },
+      before: { name: before.name, email: before.email, role: before.role, department: before.department },
+      after: { name: parsed.name, email: parsed.email, role: parsed.role, department },
     },
   });
 
