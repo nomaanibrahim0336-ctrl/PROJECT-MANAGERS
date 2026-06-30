@@ -43,7 +43,7 @@ export async function createMember(formData: FormData) {
   const department = parsed.department ?? "general";
 
   const [existing] = await db.select().from(users).where(eq(users.email, parsed.email)).limit(1);
-  if (existing) throw new Error("A user with this email already exists");
+  if (existing) redirect(`/admin/users?error=${encodeURIComponent("A user with that email already exists")}`);
 
   const passwordHash = await hash(parsed.password, 10);
 
@@ -81,26 +81,35 @@ const editMemberSchema = z.object({
 export async function editMember(userId: string, formData: FormData) {
   const actor = await requireAdmin();
 
-  const parsed = editMemberSchema.parse({
+  const parsed = editMemberSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
     role: formData.get("role"),
     department: formData.get("department") || undefined,
   });
-  const department = parsed.department ?? "general";
+  if (!parsed.success) {
+    redirect(`/admin/users?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid input")}`);
+  }
+  const { name, email, role, department: dept } = parsed.data;
+  const department = dept ?? "general";
 
   const [before] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
-  if (!before) throw new Error("User not found");
+  if (!before) redirect("/admin/users?error=User+not+found");
 
-  // Check email uniqueness if changed
-  if (parsed.email !== before.email) {
-    const [conflict] = await db.select({ id: users.id }).from(users).where(eq(users.email, parsed.email)).limit(1);
-    if (conflict) throw new Error("That email is already in use");
+  if (email.toLowerCase() !== before.email.toLowerCase()) {
+    const [conflict] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1);
+    if (conflict) {
+      redirect(`/admin/users?error=${encodeURIComponent("That email is already in use by another account")}`);
+    }
   }
 
   await db
     .update(users)
-    .set({ name: parsed.name, email: parsed.email, role: parsed.role, department, updatedAt: new Date() })
+    .set({ name, email, role, department, updatedAt: new Date() })
     .where(eq(users.id, userId));
 
   await logAudit({
@@ -111,7 +120,7 @@ export async function editMember(userId: string, formData: FormData) {
     entityId: userId,
     metadata: {
       before: { name: before.name, email: before.email, role: before.role, department: before.department },
-      after: { name: parsed.name, email: parsed.email, role: parsed.role, department },
+      after: { name, email, role, department },
     },
   });
 

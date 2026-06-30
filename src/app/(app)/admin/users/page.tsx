@@ -18,14 +18,14 @@ const DEPARTMENTS = ["publishing", "design", "development", "marketing", "genera
 export default async function UsersAdminPage({
   searchParams,
 }: {
-  searchParams: Promise<{ created?: string }>;
+  searchParams: Promise<{ created?: string; error?: string }>;
 }) {
   const session = await auth();
   if (!session?.user || !canManageMembers(session.user.role as never)) {
     redirect("/");
   }
 
-  const { created } = await searchParams;
+  const { created, error } = await searchParams;
 
   const allUsers = await db.select().from(users).where(isNull(users.deletedAt)).orderBy(users.name);
 
@@ -39,6 +39,11 @@ export default async function UsersAdminPage({
         </p>
       </div>
 
+      {error && (
+        <div className="surface-card border-l-4 border-red-400 p-4 text-sm">
+          <p className="text-red-700">{error}</p>
+        </div>
+      )}
       {created && (
         <div className="surface-card border-l-4 border-(--color-cobalt) p-4 text-sm">
           <p className="text-(--color-ink)">
