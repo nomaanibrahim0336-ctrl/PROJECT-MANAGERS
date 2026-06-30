@@ -12,7 +12,7 @@ import {
   softDeleteMember,
 } from "./actions";
 
-const ROLES = ["admin", "project_manager", "team_member", "client", "auditor"] as const;
+const ROLES = ["super_admin", "admin", "project_manager", "team_member", "client", "auditor"] as const;
 const DEPARTMENTS = ["publishing", "design", "development", "marketing", "general"] as const;
 
 export default async function UsersAdminPage({

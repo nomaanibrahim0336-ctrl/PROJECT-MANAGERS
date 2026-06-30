@@ -16,10 +16,10 @@ export default async function AppLayout({
     canViewPmPanel(role)
       ? { href: "/pm", label: "My Panel" }
       : { href: "/", label: "Dashboard" },
-    ...(role === "admin" ? [{ href: "/", label: "Dashboard" }] : []),
+    ...(role === "admin" || role === "super_admin" ? [{ href: "/", label: "Dashboard" }] : []),
     { href: "/leads", label: "Leads" },
     { href: "/clients", label: "Clients" },
-    ...(role === "admin" ? [{ href: "/admin/services", label: "Service Catalog" }] : []),
+    ...(role === "admin" || role === "super_admin" ? [{ href: "/admin/services", label: "Service Catalog" }] : []),
     ...(canManageMembers(role) ? [{ href: "/admin/users", label: "Team Members" }] : []),
     ...(canViewAuditLogs(role) ? [{ href: "/admin/audit-logs", label: "Audit Log" }] : []),
   ];

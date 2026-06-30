@@ -21,7 +21,7 @@ export default auth((req) => {
 
   if (
     ADMIN_ONLY_PREFIXES.some((p) => pathname.startsWith(p)) &&
-    role !== "admin"
+    role !== "admin" && role !== "super_admin"
   ) {
     return NextResponse.redirect(new URL("/", req.nextUrl.origin));
   }

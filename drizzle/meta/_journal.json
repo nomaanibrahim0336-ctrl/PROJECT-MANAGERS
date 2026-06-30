@@ -43,6 +43,13 @@
       "when": 1782771963911,
       "tag": "0005_deep_silver_sable",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1782857340781,
+      "tag": "0006_add_super_admin_role",
+      "breakpoints": true
     }
   ]
 }
