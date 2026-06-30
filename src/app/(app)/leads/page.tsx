@@ -1,11 +1,17 @@
+import { auth } from "@/auth";
 import { db } from "@/db";
 import { leads, serviceCatalog } from "@/db/schema";
 import { desc } from "drizzle-orm";
+import { redirect } from "next/navigation";
+import { AutoSubmitSelect } from "@/components/auto-submit-select";
 import { createLead, convertLeadToClient, updateLeadStatus } from "./actions";
 
 const STATUS_OPTIONS = ["new", "contacted", "qualified", "converted", "lost"] as const;
 
 export default async function LeadsPage() {
+  const session = await auth();
+  if (!session?.user) redirect("/login");
+
   const allLeads = await db.select().from(leads).orderBy(desc(leads.createdAt));
   const services = await db.select().from(serviceCatalog).orderBy(serviceCatalog.name);
   const serviceNameById = new Map(services.map((s) => [s.id, s.name]));
@@ -55,10 +61,9 @@ export default async function LeadsPage() {
                 </td>
                 <td className="px-6 py-3">
                   <form action={updateLeadStatus.bind(null, lead.id)}>
-                    <select
+                    <AutoSubmitSelect
                       name="status"
                       defaultValue={lead.status}
-                      onChange={(e) => e.currentTarget.form?.requestSubmit()}
                       className="field-input py-1 text-xs"
                     >
                       {STATUS_OPTIONS.map((s) => (
@@ -66,7 +71,7 @@ export default async function LeadsPage() {
                           {s}
                         </option>
                       ))}
-                    </select>
+                    </AutoSubmitSelect>
                   </form>
                 </td>
                 <td className="px-6 py-3">

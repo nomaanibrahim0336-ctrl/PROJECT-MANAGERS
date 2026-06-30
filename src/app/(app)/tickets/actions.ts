@@ -84,21 +84,19 @@ export async function markReadyForReview(ticketId: string, formData: FormData) {
     throw new Error("Forbidden");
   }
 
-  const content = formData.get("content") as string;
-  const kind = (formData.get("kind") as string) || "link";
+  const content = z.string().min(1, "Deliverable content is required").parse(formData.get("content"));
+  const kind = z.enum(["file", "link", "data"]).parse(formData.get("kind") || "link");
 
   const [ticket] = await db.select().from(tickets).where(eq(tickets.id, ticketId)).limit(1);
   if (!ticket) throw new Error("Ticket not found");
 
-  if (content) {
-    await db.insert(deliverables).values({
-      ticketId,
-      uploaderId: session.user.id,
-      kind: kind as "file" | "link" | "data",
-      content,
-      revisionNumber: ticket.revisionNumber,
-    });
-  }
+  await db.insert(deliverables).values({
+    ticketId,
+    uploaderId: session.user.id,
+    kind,
+    content,
+    revisionNumber: ticket.revisionNumber,
+  });
 
   await db
     .update(tickets)

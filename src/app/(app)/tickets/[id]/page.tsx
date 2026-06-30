@@ -3,7 +3,8 @@ import { db } from "@/db";
 import { clients, deliverables, ticketClientFeedback, ticketInternalComments, tickets, users } from "@/db/schema";
 import { canCreateTicket, canForwardOrAssignRevision, canMarkReadyForReview } from "@/lib/rbac";
 import { and, desc, eq, isNull } from "drizzle-orm";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { AutoSubmitSelect } from "@/components/auto-submit-select";
 import {
   addInternalComment,
   assignRevision,
@@ -35,7 +36,8 @@ export default async function TicketDetailPage({
 }) {
   const { id } = await params;
   const session = await auth();
-  const role = session!.user.role;
+  if (!session?.user) redirect("/login");
+  const role = session.user.role;
 
   const [ticket] = await db.select().from(tickets).where(eq(tickets.id, id)).limit(1);
   if (!ticket) notFound();
@@ -100,10 +102,9 @@ export default async function TicketDetailPage({
         {canCreateTicket(role as never) ? (
           <form action={reassignTicket.bind(null, ticket.id)} className="mt-3 flex items-center gap-2">
             <label className="text-xs text-(--color-slate)">Assigned to:</label>
-            <select
+            <AutoSubmitSelect
               name="assignedToId"
               defaultValue={ticket.assignedToId ?? ""}
-              onChange={(e) => e.currentTarget.form?.requestSubmit()}
               className="field-input py-1 text-xs"
             >
               <option value="">Unassigned</option>
@@ -112,7 +113,7 @@ export default async function TicketDetailPage({
                   {member.name} ({member.department})
                 </option>
               ))}
-            </select>
+            </AutoSubmitSelect>
           </form>
         ) : (
           <p className="mt-2 text-xs text-(--color-slate)">
@@ -220,6 +221,7 @@ export default async function TicketDetailPage({
             <input
               name="content"
               placeholder="Paste deliverable link or notes"
+              required
               className="field-input block w-full"
             />
             <button className="btn-primary">Mark as Ready for PM Review</button>

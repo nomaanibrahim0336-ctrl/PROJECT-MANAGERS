@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { clients, serviceCatalog, tickets, users } from "@/db/schema";
 import { canCreateTicket } from "@/lib/rbac";
 import { and, desc, eq, isNull } from "drizzle-orm";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { createTicket } from "../../tickets/actions";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -21,7 +21,8 @@ export default async function ClientDetailPage({
 }) {
   const { id } = await params;
   const session = await auth();
-  const role = session!.user.role;
+  if (!session?.user) redirect("/login");
+  const role = session.user.role;
 
   const [client] = await db.select().from(clients).where(eq(clients.id, id)).limit(1);
   if (!client) notFound();

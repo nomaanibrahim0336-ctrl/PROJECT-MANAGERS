@@ -2,11 +2,7 @@
 
 import { auth } from "@/auth";
 import { db } from "@/db";
-import {
-  clients,
-  leads,
-  type leadStatusEnum,
-} from "@/db/schema";
+import { clients, leads, leadStatusEnum } from "@/db/schema";
 import { canManageLeads } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
 import { eq } from "drizzle-orm";
@@ -68,7 +64,7 @@ export async function updateLeadStatus(leadId: string, formData: FormData) {
     throw new Error("Forbidden");
   }
 
-  const status = formData.get("status") as (typeof leadStatusEnum.enumValues)[number];
+  const status = z.enum(leadStatusEnum.enumValues).parse(formData.get("status"));
 
   await db
     .update(leads)

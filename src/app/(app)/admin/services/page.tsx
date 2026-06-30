@@ -1,8 +1,14 @@
+import { auth } from "@/auth";
 import { db } from "@/db";
 import { serviceCatalog } from "@/db/schema";
+import { canManageServiceCatalog } from "@/lib/rbac";
+import { redirect } from "next/navigation";
 import { createCustomService } from "./actions";
 
 export default async function ServiceCatalogAdminPage() {
+  const session = await auth();
+  if (!session?.user || !canManageServiceCatalog(session.user.role as never)) redirect("/");
+
   const services = await db.select().from(serviceCatalog).orderBy(serviceCatalog.name);
 
   return (
