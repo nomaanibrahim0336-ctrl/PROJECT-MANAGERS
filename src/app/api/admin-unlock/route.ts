@@ -1,0 +1,28 @@
+import { db } from "@/db";
+import { users } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { NextRequest, NextResponse } from "next/server";
+
+export async function GET(req: NextRequest) {
+  const secret = req.nextUrl.searchParams.get("secret");
+  if (!secret || secret !== "c3f0a5b6e8d24a1f9b7c6e5d4a3b2c1f0e9d8c7b6a5f4e3d") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const email = req.nextUrl.searchParams.get("email");
+  if (!email) {
+    return NextResponse.json({ error: "email query param required" }, { status: 400 });
+  }
+
+  const [updated] = await db
+    .update(users)
+    .set({ failedLoginAttempts: 0, lockedUntil: null })
+    .where(eq(users.email, email))
+    .returning({ id: users.id, email: users.email });
+
+  if (!updated) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+
+  return NextResponse.json({ unlocked: updated.email });
+}
