@@ -2,8 +2,9 @@
 
 import { signIn } from "@/auth";
 import { AuthError } from "next-auth";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 
-export async function loginAction(formData: FormData) {
+export async function loginAction(_prevState: string | undefined, formData: FormData) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
   const remember = formData.get("remember") === "on" ? "true" : "false";
@@ -12,8 +13,9 @@ export async function loginAction(formData: FormData) {
   try {
     await signIn("credentials", { email, password, remember, redirectTo: callbackUrl });
   } catch (error) {
+    if (isRedirectError(error)) throw error;
     if (error instanceof AuthError) {
-      throw new Error("Invalid email or password, or your account is locked/suspended");
+      return "Invalid email or password, or your account is locked/suspended";
     }
     throw error;
   }
