@@ -3,8 +3,8 @@ import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(req: NextRequest) {
-  const secret = req.headers.get("x-unlock-secret");
+export async function GET(req: NextRequest) {
+  const secret = req.nextUrl.searchParams.get("secret");
   if (!secret || secret !== "51e68ee46f6c4df77eef7179f00f0e58032ee79c956f8a91") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
