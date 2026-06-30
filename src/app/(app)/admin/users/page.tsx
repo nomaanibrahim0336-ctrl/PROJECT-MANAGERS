@@ -18,14 +18,14 @@ const DEPARTMENTS = ["publishing", "design", "development", "marketing", "genera
 export default async function UsersAdminPage({
   searchParams,
 }: {
-  searchParams: Promise<{ created?: string; tempPassword?: string; reset?: string }>;
+  searchParams: Promise<{ created?: string }>;
 }) {
   const session = await auth();
   if (!session?.user || !canManageMembers(session.user.role as never)) {
     redirect("/");
   }
 
-  const { created, tempPassword, reset } = await searchParams;
+  const { created } = await searchParams;
 
   const allUsers = await db.select().from(users).where(isNull(users.deletedAt)).orderBy(users.name);
 
@@ -34,24 +34,16 @@ export default async function UsersAdminPage({
       <div>
         <h1 className="text-[18px] font-semibold text-(--color-ink)">Team Members</h1>
         <p className="text-sm text-(--color-slate)">
-          Add, edit, suspend, or reset access for users. There is no email provider configured
-          yet, so temporary passwords are shown here once instead of being emailed.
+          Add, edit, suspend, or reset access for users. You set each member&apos;s password
+          yourself when adding them or resetting access.
         </p>
       </div>
 
-      {tempPassword && (
+      {created && (
         <div className="surface-card border-l-4 border-(--color-cobalt) p-4 text-sm">
-          {reset ? (
-            <p className="text-(--color-ink)">
-              Password reset. New temporary password: <code className="font-mono font-semibold">{tempPassword}</code>
-            </p>
-          ) : (
-            <p className="text-(--color-ink)">
-              Created <strong>{created}</strong>. Temporary password:{" "}
-              <code className="font-mono font-semibold">{tempPassword}</code> — share this with the
-              user securely; they should change it after first login.
-            </p>
-          )}
+          <p className="text-(--color-ink)">
+            Created <strong>{created}</strong>. Share the email and password you set with them.
+          </p>
         </div>
       )}
 
@@ -60,6 +52,14 @@ export default async function UsersAdminPage({
         <form action={createMember} className="grid grid-cols-2 gap-3">
           <input name="name" placeholder="Full name" required className="field-input" />
           <input name="email" type="email" placeholder="Email" required className="field-input" />
+          <input
+            name="password"
+            type="password"
+            placeholder="Password (min 8 characters)"
+            required
+            minLength={8}
+            className="field-input"
+          />
           <select name="role" required className="field-input">
             {ROLES.map((r) => (
               <option key={r} value={r}>
@@ -67,7 +67,7 @@ export default async function UsersAdminPage({
               </option>
             ))}
           </select>
-          <select name="department" className="field-input">
+          <select name="department" className="field-input col-span-2">
             <option value="">No specific department (e.g. PM/Admin)</option>
             {DEPARTMENTS.map((d) => (
               <option key={d} value={d}>
@@ -133,8 +133,19 @@ export default async function UsersAdminPage({
                     {user.status === "active" ? "Suspend" : "Activate"}
                   </button>
                 </form>
-                <form action={forcePasswordReset.bind(null, user.id)}>
-                  <button className="btn-secondary text-xs">Force Password Reset</button>
+                <form
+                  action={forcePasswordReset.bind(null, user.id)}
+                  className="flex items-center gap-2"
+                >
+                  <input
+                    name="password"
+                    type="password"
+                    placeholder="New password"
+                    required
+                    minLength={8}
+                    className="field-input py-1 text-xs"
+                  />
+                  <button className="btn-secondary text-xs">Set Password</button>
                 </form>
                 <form action={softDeleteMember.bind(null, user.id)}>
                   <button className="btn-secondary text-xs text-(--color-red)" disabled={user.id === session.user.id}>

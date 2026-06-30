@@ -6,7 +6,6 @@ import { users } from "@/db/schema";
 import { canManageMembers } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
 import { hash } from "bcryptjs";
-import { randomBytes } from "crypto";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -26,6 +25,7 @@ async function requireAdmin() {
 const createMemberSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
+  password: z.string().min(8, "Password must be at least 8 characters"),
   role: z.enum(ROLES),
   department: z.enum(DEPARTMENTS).optional(),
 });
@@ -36,6 +36,7 @@ export async function createMember(formData: FormData) {
   const parsed = createMemberSchema.parse({
     name: formData.get("name"),
     email: formData.get("email"),
+    password: formData.get("password"),
     role: formData.get("role"),
     department: formData.get("department") || undefined,
   });
@@ -44,8 +45,7 @@ export async function createMember(formData: FormData) {
   const [existing] = await db.select().from(users).where(eq(users.email, parsed.email)).limit(1);
   if (existing) throw new Error("A user with this email already exists");
 
-  const tempPassword = randomBytes(9).toString("base64url");
-  const passwordHash = await hash(tempPassword, 10);
+  const passwordHash = await hash(parsed.password, 10);
 
   const [created] = await db
     .insert(users)
@@ -68,7 +68,7 @@ export async function createMember(formData: FormData) {
   });
 
   revalidatePath("/admin/users");
-  redirect(`/admin/users?created=${created.email}&tempPassword=${tempPassword}`);
+  redirect(`/admin/users?created=${created.email}`);
 }
 
 const editMemberSchema = z.object({
@@ -150,11 +150,11 @@ export async function softDeleteMember(userId: string) {
   revalidatePath("/admin/users");
 }
 
-export async function forcePasswordReset(userId: string) {
+export async function forcePasswordReset(userId: string, formData: FormData) {
   const actor = await requireAdmin();
 
-  const tempPassword = randomBytes(9).toString("base64url");
-  const passwordHash = await hash(tempPassword, 10);
+  const password = z.string().min(8, "Password must be at least 8 characters").parse(formData.get("password"));
+  const passwordHash = await hash(password, 10);
 
   await db
     .update(users)
@@ -170,5 +170,4 @@ export async function forcePasswordReset(userId: string) {
   });
 
   revalidatePath("/admin/users");
-  redirect(`/admin/users?tempPassword=${tempPassword}&reset=1`);
 }
