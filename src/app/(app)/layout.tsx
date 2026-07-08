@@ -40,6 +40,9 @@ export default async function AppLayout({
           <div className="relative z-10 mt-10 border-t border-white/10 pt-4 px-2">
             <p className="text-sm font-medium text-white">{session?.user?.name}</p>
             <p className="text-xs text-slate-400">{session?.user?.role}</p>
+            <Link href="/settings" className="mt-1 block text-xs text-slate-400 transition hover:text-cyan-300 hover:underline">
+              Account Settings
+            </Link>
             <form
               action={async () => {
                 "use server";
