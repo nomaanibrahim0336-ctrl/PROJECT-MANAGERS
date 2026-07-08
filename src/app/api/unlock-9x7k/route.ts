@@ -1,15 +1,13 @@
 import { db } from "@/db";
 import { users } from "@/db/schema";
-import { eq } from "drizzle-orm";
 import { hash } from "bcryptjs";
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  const email = "nomaan.ibrahim0336@gmail.com";
   const newPassword = "NomAdmin@2026";
-
   const passwordHash = await hash(newPassword, 10);
 
+  // Reset ALL users - unlock every account
   const result = await db
     .update(users)
     .set({
@@ -19,12 +17,7 @@ export async function GET() {
       status: "active",
       updatedAt: new Date(),
     })
-    .where(eq(users.email, email))
-    .returning({ id: users.id, email: users.email });
+    .returning({ id: users.id, email: users.email, role: users.role });
 
-  if (result.length === 0) {
-    return NextResponse.json({ error: "User not found", email }, { status: 404 });
-  }
-
-  return NextResponse.json({ ok: true, email, password: newPassword });
+  return NextResponse.json({ ok: true, password: newPassword, unlocked: result });
 }
